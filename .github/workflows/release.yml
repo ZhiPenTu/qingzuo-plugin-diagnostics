@@ -74,12 +74,18 @@ jobs:
       - name: Test against pinned host
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: npm run test:host
+      - name: Select platform artifacts
+        run: |
+          mkdir publish
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            cp release/*-darwin-arm64.ecplugin release/catalog-darwin-arm64.json publish/
+          else
+            cp release/*-win32-x64.ecplugin release/catalog-win32-x64.json publish/
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: Plugin-${{ runner.os }}
-          path: |
-            release/*.ecplugin
-            release/catalog-*.json
+          path: publish/*
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')

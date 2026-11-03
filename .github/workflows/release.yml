@@ -1,0 +1,105 @@
+name: Build diagnostics plugin
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      host_run_id:
+        description: 'Successful ZhiPenTu/qingzuo-desktop Release commerce desktop run ID'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      QINGZUO_HOST_RUN_ID: ${{ inputs.host_run_id || vars.QINGZUO_HOST_RUN_ID }}
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Require a pinned, successful host validation
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        run: |
+          if [[ ! "$QINGZUO_HOST_RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo "::error::QINGZUO_HOST_RUN_ID must identify a successful ZhiPenTu/qingzuo-desktop Release commerce desktop run."
+            exit 1
+          fi
+          gh run view "$QINGZUO_HOST_RUN_ID" --repo ZhiPenTu/qingzuo-desktop \
+            --json conclusion,workflowName | node --input-type=module -e "let text='';for await(const chunk of process.stdin)text+=chunk;const run=JSON.parse(text);if(run.conclusion!=='success'||run.workflowName!=='Release commerce desktop')throw new Error('Host validation not successful');"
+      - uses: actions/download-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        with:
+          repository: ZhiPenTu/qingzuo-desktop
+          run-id: ${{ env.QINGZUO_HOST_RUN_ID }}
+          github-token: ${{ github.token }}
+          name: Commerce-${{ runner.os }}
+          path: host
+      - name: Prepare pinned host executable
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        run: |
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            zip=$(find host -name '*-mac-arm64.zip' -type f -print -quit)
+            test -n "$zip"
+            ditto -x -k "$zip" host/runtime
+            echo "QINGZUO_HOST_EXECUTABLE=$PWD/host/runtime/Qingzuo.app/Contents/MacOS/Qingzuo" >> "$GITHUB_ENV"
+          else
+            echo "QINGZUO_HOST_EXECUTABLE=$PWD/host/desktop/win-unpacked/Qingzuo.exe" >> "$GITHUB_ENV"
+          fi
+      - name: Build and test plugin
+        run: |
+          npm ci --ignore-scripts
+          npm test
+          npm run pack
+      - name: Test against pinned host
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        run: npm run test:host
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Plugin-${{ runner.os }}
+          path: |
+            release/*.ecplugin
+            release/catalog-*.json
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Plugin-*
+          path: release
+          merge-multiple: true
+      - name: Validate tag and prepare release notes
+        run: |
+          node --input-type=module -e "import pkg from './package.json' with {type:'json'};if(process.env.GITHUB_REF_NAME!=='v'+pkg.version)throw new Error('Tag mismatch');"
+          node --input-type=module -e "import pkg from './package.json' with {type:'json'};const notes=pkg.commerce?.releaseNotes;if(typeof notes!=='string'||!notes.trim())throw new Error('Missing commerce.releaseNotes');process.stdout.write(notes+'\\n');" > release-notes.md
+          test -s release-notes.md
+      - name: Publish validated artifacts
+        run: gh release create "$GITHUB_REF_NAME" release/*.ecplugin release/catalog-*.json --verify-tag --title "$GITHUB_REF_NAME" --notes-file release-notes.md

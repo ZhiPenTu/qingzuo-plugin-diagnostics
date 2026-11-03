@@ -12,7 +12,7 @@
     "category": "开发工具",
     "api": "^1.10.0",
     "ui": "ui/index.html",
-    "releaseNotes": "首个版本：查看、筛选和实时刷新轻作调试日志。修复双平台发布制品与目录片段的平台对应关系，确保 macOS 与 Windows 仅发布各自的插件包和 catalog 片段。",
+    "releaseNotes": "首个版本：查看、筛选和实时刷新轻作调试日志。修复双平台安装包与版本信息不一致的问题，确保各平台获取正确制品。",
     "permissions": {}
   },
   "scripts": {

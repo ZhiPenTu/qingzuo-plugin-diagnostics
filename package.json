@@ -1,0 +1,29 @@
+{
+  "name": "@commerce/plugin-diagnostics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "查看、筛选和实时刷新轻作调试日志",
+  "commerce": {
+    "manifestVersion": 1,
+    "id": "official.diagnostics",
+    "title": "日志调试",
+    "description": "查看轻作、插件与浏览器的调试日志，支持按范围和级别筛选。",
+    "category": "开发工具",
+    "api": "^1.10.0",
+    "ui": "ui/index.html",
+    "releaseNotes": "首个版本：查看、筛选和实时刷新轻作调试日志。",
+    "permissions": {}
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "pack": "node scripts/pack-plugin.mjs",
+    "test:host": "node tests/host.mjs",
+    "preview": "node scripts/preview.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "adm-zip": "0.5.16"
+  },
+  "license": "MIT"
+}

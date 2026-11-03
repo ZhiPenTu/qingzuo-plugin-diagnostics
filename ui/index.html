@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'self'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>日志调试</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>日志调试</h1>
+        <span>查看轻作运行日志</span>
+      </div>
+      <div class="topbar-actions">
+        <span id="realtime-state" class="realtime-state">正在连接</span>
+        <button id="refresh" class="secondary" type="button">刷新</button>
+      </div>
+    </header>
+
+    <section class="status-grid" aria-label="日志状态">
+      <div class="status-item">
+        <span>日志记录</span>
+        <strong id="logging-state" class="badge" data-tone="muted">读取中</strong>
+      </div>
+      <div class="status-item">
+        <span>访问授权</span>
+        <strong id="auth-state" class="badge" data-tone="muted">待确认</strong>
+      </div>
+      <div class="status-item">
+        <span>已载入</span>
+        <strong id="loaded-count">0 条</strong>
+      </div>
+      <div class="status-item">
+        <span>占用空间</span>
+        <strong id="storage-usage">—</strong>
+      </div>
+    </section>
+
+    <section class="location-panel" aria-label="日志保存位置">
+      <div class="location-row">
+        <span>保存目录</span>
+        <code id="directory">—</code>
+      </div>
+      <div class="location-row">
+        <span>当前文件</span>
+        <code id="current-file">—</code>
+      </div>
+    </section>
+
+    <p id="host-error" class="message error-message" role="alert" hidden></p>
+    <p id="status-error" class="message error-message" role="alert" hidden></p>
+
+    <main class="content">
+      <div class="filterbar">
+        <div class="filters" role="group" aria-label="日志筛选">
+          <label class="filter-field">
+            <span>范围</span>
+            <select id="scope-filter">
+              <option value="all">全部</option>
+              <option value="app">底座</option>
+              <option value="plugin">插件</option>
+              <option value="browser">浏览器</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            <span>级别</span>
+            <select id="level-filter">
+              <option value="all">全部</option>
+              <option value="debug">调试</option>
+              <option value="info">信息</option>
+              <option value="warn">警告</option>
+              <option value="error">错误</option>
+            </select>
+          </label>
+        </div>
+        <span id="visible-count" class="visible-count">0 条</span>
+      </div>
+
+      <section id="loading" class="state-card" aria-busy="true">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>正在读取日志…</p>
+      </section>
+
+      <section id="error-state" class="state-card error-card" hidden>
+        <h2>暂时无法读取日志</h2>
+        <p id="error-message"></p>
+        <button id="retry" class="primary" type="button">重新读取</button>
+      </section>
+
+      <section id="empty-state" class="state-card" hidden>
+        <div class="empty-mark" aria-hidden="true">·</div>
+        <h2 id="empty-title">还没有日志</h2>
+        <p id="empty-copy">运行轻作、插件或浏览器后，日志会显示在这里。</p>
+      </section>
+
+      <div id="log-list" class="log-list" role="log" aria-label="日志列表" aria-live="off" hidden></div>
+    </main>
+
+    <p class="footnote">日志开关、保存目录和容量上限由轻作主壳管理。</p>
+  </div>
+
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

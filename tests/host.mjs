@@ -81,7 +81,7 @@ test('the packaged diagnostics plugin installs and opens in a real Qingzuo host'
     const card = page.locator('[data-slot="card"]').filter({ hasText: '日志调试' });
     await expect(card.getByRole('heading', { name: '日志调试', exact: true })).toBeVisible();
     await card.getByRole('button', { name: '安装插件', exact: true }).click();
-    await expect(card.getByRole('button', { name: '已安装', exact: true })).toBeVisible({ timeout: 60_000 });
+    await expect(card.getByText('已安装', { exact: true })).toBeVisible({ timeout: 60_000 });
 
     await page.getByRole('tab', { name: '已安装', exact: true }).click();
     const installedCard = page.locator('[data-slot="card"]').filter({ hasText: '日志调试' });

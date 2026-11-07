@@ -64,11 +64,13 @@ test('pack emits identical dual-platform artifacts with only the UI manifest, li
         'artifacts',
         'category',
         'description',
+        'icon',
         'id',
         'releaseNotes',
         'title',
         'version',
       ]);
+      assert.equal(catalog.plugins[0].icon, manifest.icon);
       const record = catalog.plugins[0].artifacts[platform];
       assert.equal(record.size, bytes.length);
       assert.equal(record.sha256, createHash('sha256').update(bytes).digest('hex'));
